@@ -3,7 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Ninja Dragon Hunter: HOTS Edition</title>
+  <title>Ninja Dragon Hunter: Final</title>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -43,14 +43,23 @@
     .splash-icon.delay { animation-delay: 1.5s; }
     @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
+    /* Password Input */
+    .pass-input {
+        background: rgba(255, 255, 255, 0.1); border: 2px solid #fbbf24; color: white;
+        padding: 12px; border-radius: 12px; text-align: center; font-size: 1.2rem;
+        letter-spacing: 2px; width: 200px; margin-bottom: 15px; outline: none; text-transform: uppercase;
+    }
+    .pass-input:focus { background: rgba(255, 255, 255, 0.2); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+    
     .start-btn {
-      background: #ef4444; color: white; padding: 1rem 3rem; border-radius: 99px;
-      font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); border: 4px solid #b91c1c;
-      animation: pulseBtn 2s infinite; transition: transform 0.2s;
+      background: #ef4444; color: white; padding: 0.8rem 2rem; border-radius: 99px;
+      font-size: 1rem; font-weight: 800; letter-spacing: 1px;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); border: 3px solid #b91c1c;
+      transition: transform 0.2s;
     }
     .start-btn:active { transform: scale(0.95); }
-    @keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    .shake-anim { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
     .fade-out { opacity: 0; pointer-events: none; }
 
     /* --- GAME STYLES --- */
@@ -101,21 +110,17 @@
     /* --- MODALS --- */
     .win-modal { width: 90%; max-width: 380px; max-height: 85vh; overflow-y: auto; animation: modalPop 0.3s ease; }
     @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .scroll-active { animation: pulseScroll 2s infinite; cursor: pointer; }
-    @keyframes pulseScroll { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.1); filter: brightness(1.2); } }
+    
+    /* Scroll Active State - NO ANIMATION */
+    .scroll-active { cursor: pointer; } 
+    
     .shake-screen { animation: screenShake 0.4s ease; }
     @keyframes screenShake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-5px, 5px); } 75% { transform: translate(5px, -5px); } }
 
     /* --- BRANDING FOOTER --- */
     .brand-footer {
-        font-size: 0.65rem;
-        font-weight: 900;
-        letter-spacing: 0.3em;
-        color: rgba(255, 255, 255, 0.2);
-        margin-top: auto;
-        padding-top: 10px;
-        text-align: center;
-        width: 100%;
+        font-size: 0.65rem; font-weight: 900; letter-spacing: 0.3em;
+        color: rgba(255, 255, 255, 0.2); margin-top: auto; padding-top: 10px; text-align: center; width: 100%;
     }
   </style>
   <style>@view-transition { navigation: auto; }</style>
@@ -129,8 +134,13 @@
           <div class="splash-icon delay">🐲</div>
       </div>
       <h1 class="splash-logo">DESA<br>MAHULU</h1>
-      <p class="text-white text-opacity-70 mb-8 font-mono tracking-widest text-sm">MATHNOLOGY EDITION</p>
-      <button id="startBtn" class="start-btn">MULAI GAME</button>
+      <p class="text-white text-opacity-70 mb-6 font-mono tracking-widest text-xs">MASUKKAN KODE RAHASIA:</p>
+      <div class="flex flex-col items-center">
+          <input type="text" id="passInput" class="pass-input" placeholder="XXXX" maxlength="10" autocomplete="off">
+          <button id="startBtn" class="start-btn">MASUK</button>
+          <p id="errorMsg" class="hidden text-red-500 font-bold mt-2 text-sm bg-black/50 px-2 py-1 rounded">Sandi Salah!</p>
+      </div>
+      <p class="absolute bottom-6 text-xs text-slate-500">v1.1 • Password Protected</p>
   </div>
 
   <div id="app" class="w-full h-full flex flex-col items-center">
@@ -165,8 +175,6 @@
        <button id="downBtn" class="control-btn" style="grid-area: down;">↓</button>
        <button id="rightBtn" class="control-btn" style="grid-area: right;">→</button>
      </div>
-     
-     <button id="resetBtn" class="text-xs font-bold text-slate-500 bg-slate-800 px-4 py-2 rounded-full border border-slate-700 active:bg-slate-700">🔄 Reset Game</button>
      
      <div class="brand-footer">MATHNOLOGY</div>
    </div>
@@ -247,24 +255,32 @@
   </div>
 
   <script>
-    document.getElementById('startBtn').addEventListener('click', () => {
-        const splash = document.getElementById('splashScreen');
-        const app = document.getElementById('app');
-        splash.classList.add('fade-out');
-        setTimeout(() => { splash.style.display = 'none'; app.classList.add('visible'); }, 800);
-    });
+    document.getElementById('startBtn').addEventListener('click', checkPassword);
+    document.getElementById('passInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') checkPassword(); });
 
-    // --- HOTS QUESTIONS (Analysis & Context) ---
+    function checkPassword() {
+        const val = document.getElementById('passInput').value.toUpperCase();
+        if (val === 'FQFR') {
+            const splash = document.getElementById('splashScreen');
+            const app = document.getElementById('app');
+            splash.classList.add('fade-out');
+            setTimeout(() => { splash.style.display = 'none'; app.classList.add('visible'); }, 800);
+        } else {
+            const err = document.getElementById('errorMsg');
+            const input = document.getElementById('passInput');
+            err.classList.remove('hidden');
+            input.classList.add('shake-anim');
+            input.value = '';
+            setTimeout(() => input.classList.remove('shake-anim'), 500);
+        }
+    }
+
+    // --- HOTS QUESTIONS ---
     const translationQuestions = [
-      // Analisis: Mencari Vektor
       { question: "Ninja berada di (2, 3) dan melompat ke (5, 4). Jurus translasi apa yang digunakan?", options: ["T = (3, 1)", "T = (7, 7)", "T = (-3, -1)", "T = (1, 3)"], correct: 0 },
-      // Analisis: Mencari Titik Awal (Reverse Logic)
       { question: "Setelah digeser T(2, -1), posisi Naga menjadi (4, 4). Dimana posisi awal Naga?", options: ["(2, 5)", "(6, 3)", "(2, 3)", "(6, 5)"], correct: 0 },
-      // Komposisi: Dua Langkah
       { question: "Titik A(1, 1) digeser T(1, 0), lalu digeser lagi T(0, 2). Posisi akhirnya adalah...", options: ["(2, 3)", "(1, 3)", "(2, 1)", "(2, 2)"], correct: 0 },
-      // Pola/Relasi
       { question: "Jika A(0,0) berubah menjadi A'(3,3), maka titik B(2,1) dengan pergeseran yang sama akan menjadi...", options: ["B'(5, 4)", "B'(5, 1)", "B'(3, 3)", "B'(6, 3)"], correct: 0 },
-      // Kontekstual / Cerita
       { question: "Ninja ingin menyerang Naga. Ia harus bergerak 2 langkah ke Kanan dan 3 langkah ke Bawah. Vektornya adalah...", options: ["(2, -3)", "(-2, 3)", "(2, 3)", "(-2, -3)"], correct: 0 },
       { question: "Sebuah panah melesat dari (5, 5) dan mengenai sasaran di (2, 5). Panah itu bergerak sejauh...", options: ["T = (-3, 0)", "T = (3, 0)", "T = (0, -3)", "T = (-3, 5)"], correct: 0 },
       { question: "Titik P(x, y) digeser oleh T(a, b). Rumus yang BENAR untuk mencari bayangannya adalah...", options: ["(x+a, y+b)", "(x-a, y-b)", "(x+b, y+a)", "(x.a, y.b)"], correct: 0 },
@@ -501,7 +517,6 @@
     document.getElementById('closeDialogBtn').onclick = ()=>{ document.getElementById('dialogModal').classList.add('hidden'); gameState.showingDialog=false; };
     document.getElementById('closeLearningBtn').onclick = ()=>{ document.getElementById('learningModal').classList.add('hidden'); gameState.showingDialog=false; };
     document.getElementById('cancelFightBtn').onclick = ()=>{ document.getElementById('fightModal').classList.add('hidden'); gameState.showingDialog=false; };
-    document.getElementById('resetBtn').onclick = ()=>initGame();
     document.getElementById('retryBtn').onclick = ()=>{ document.getElementById('gameOverModal').classList.add('hidden'); initGame(); };
     document.getElementById('playAgainBtn').onclick = ()=>{ document.getElementById('winModal').classList.add('hidden'); initGame(); };
 
