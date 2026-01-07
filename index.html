@@ -3,131 +3,140 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Ninja Dragon Hunter: Mobile</title>
+  <title>Ninja Dragon Hunter: HOTS Edition</title>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* --- MOBILE OPTIMIZATION CSS --- */
-    :root {
-      --safe-bottom: env(safe-area-inset-bottom, 20px);
-    }
+    :root { --safe-bottom: env(safe-area-inset-bottom, 20px); }
 
     body { 
       box-sizing: border-box; 
       font-family: 'Poppins', sans-serif; 
-      overflow: hidden; /* Mencegah scroll halaman */
-      touch-action: none; /* Mencegah pull-to-refresh */
+      overflow: hidden; 
+      touch-action: none; 
       user-select: none;
       -webkit-user-select: none;
+      background-color: #0f172a;
     }
     
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
     
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* --- BACKGROUND & JUDUL --- */
+    /* --- SPLASH SCREEN --- */
+    #splashScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.8s ease-in-out;
+    }
+    
+    .splash-logo {
+      font-size: 3.5rem; line-height: 1; text-align: center; font-weight: 900;
+      background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 0 rgba(180, 83, 9, 0.5)); margin-bottom: 2rem;
+    }
+    
+    .splash-icon { font-size: 4rem; animation: floatIcon 3s ease-in-out infinite; }
+    .splash-icon.delay { animation-delay: 1.5s; }
+    @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+    .start-btn {
+      background: #ef4444; color: white; padding: 1rem 3rem; border-radius: 99px;
+      font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); border: 4px solid #b91c1c;
+      animation: pulseBtn 2s infinite; transition: transform 0.2s;
+    }
+    .start-btn:active { transform: scale(0.95); }
+    @keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    .fade-out { opacity: 0; pointer-events: none; }
+
+    /* --- GAME STYLES --- */
     #app {
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       padding-bottom: var(--safe-bottom);
+      opacity: 0; transition: opacity 1s ease;
     }
+    #app.visible { opacity: 1; }
 
     .epic-title {
       font-family: 'Poppins', sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
       background: linear-gradient(180deg, #fffbeb 0%, #fbbf24 40%, #d97706 100%);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 2px 0px rgba(180, 83, 9, 1));
-      -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.3);
-      font-size: 1.8rem;
+      -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.3); font-size: 1.8rem;
     }
 
-    /* --- GRID SYSTEM --- */
+    /* --- GRID --- */
     .map-frame {
       background-color: #5d4037; border: 4px solid #3e2723; border-radius: 12px; padding: 4px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      width: 95vw;
-      max-width: 400px;
-      aspect-ratio: 1 / 1;
-      margin: 0 auto;
-      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5); width: 95vw; max-width: 400px; aspect-ratio: 1 / 1;
+      margin: 0 auto; display: flex; align-items: center; justify-content: center;
     }
-    
-    #gameGrid {
-      width: 100%; height: 100%;
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      grid-template-rows: repeat(6, 1fr);
-      gap: 1px;
-    }
-
+    #gameGrid { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); gap: 1px; }
     .grid-cell { position: relative; overflow: hidden; border-radius: 4px; }
     
-    /* Terrain Styles */
-    .grass-light { background-color: #86efac; }
-    .grass-dark { background-color: #4ade80; }
+    .grass-light { background-color: #86efac; } .grass-dark { background-color: #4ade80; }
     .cell-wall { background-color: #3f6212 !important; border-bottom: 3px solid #14532d; }
-    
-    /* Boss: Purple Glow */
-    .cell-boss { 
-        background-color: rgba(147, 51, 234, 0.4) !important; 
-        border: 2px solid #9333ea; 
-        animation: bossPulse 2s infinite; 
-    }
+    .cell-boss { background-color: rgba(147, 51, 234, 0.4) !important; border: 2px solid #9333ea; animation: bossPulse 2s infinite; }
     .cell-danger { background-color: rgba(239, 68, 68, 0.3) !important; border: 1px solid #ef4444; }
     .cell-safe { background-color: rgba(251, 191, 36, 0.3) !important; border: 1px dashed #fbbf24; }
     .cell-learn { background-color: rgba(59, 130, 246, 0.3) !important; border: 1px solid #3b82f6; }
-    
     @keyframes bossPulse { 0%, 100% { border-color: #9333ea; } 50% { border-color: #ffffff; } }
 
-    /* Character Sizes */
-    .char-icon {
-      font-size: clamp(1.2rem, 8vw, 2.5rem);
-      filter: drop-shadow(0 2px 1px rgba(0,0,0,0.3));
-      z-index: 10;
-    }
-    
+    .char-icon { font-size: clamp(1.2rem, 8vw, 2.5rem); filter: drop-shadow(0 2px 1px rgba(0,0,0,0.3)); z-index: 10; }
     .robot { transition: transform 0.1s; }
 
-    /* --- CONTROLS (D-PAD) --- */
-    .d-pad-container {
-      display: grid;
-      grid-template-areas: 
-        ". up ."
-        "left down right";
-      gap: 8px;
-      margin-top: 10px;
-    }
-    
+    /* --- CONTROLS --- */
+    .d-pad-container { display: grid; grid-template-areas: ". up ." "left down right"; gap: 8px; margin-top: 10px; }
     .control-btn {
-      width: 55px; height: 55px;
-      border-radius: 12px;
-      font-size: 1.5rem; font-weight: bold;
-      background: #fbbf24; color: #451a03;
-      box-shadow: 0 4px 0 #b45309;
+      width: 55px; height: 55px; border-radius: 12px; font-size: 1.5rem; font-weight: bold;
+      background: #fbbf24; color: #451a03; box-shadow: 0 4px 0 #b45309;
       display: flex; align-items: center; justify-content: center;
     }
     .control-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #b45309; }
 
     /* --- MODALS --- */
-    .win-modal {
-      width: 90%; max-width: 380px;
-      max-height: 85vh; overflow-y: auto;
-      animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
+    .win-modal { width: 90%; max-width: 380px; max-height: 85vh; overflow-y: auto; animation: modalPop 0.3s ease; }
     @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-    /* Screen Shake Animation Only (No Sound) */
+    .scroll-active { animation: pulseScroll 2s infinite; cursor: pointer; }
+    @keyframes pulseScroll { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.1); filter: brightness(1.2); } }
     .shake-screen { animation: screenShake 0.4s ease; }
     @keyframes screenShake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-5px, 5px); } 75% { transform: translate(5px, -5px); } }
+
+    /* --- BRANDING FOOTER --- */
+    .brand-footer {
+        font-size: 0.65rem;
+        font-weight: 900;
+        letter-spacing: 0.3em;
+        color: rgba(255, 255, 255, 0.2);
+        margin-top: auto;
+        padding-top: 10px;
+        text-align: center;
+        width: 100%;
+    }
   </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
  <body class="h-full">
+  
+  <div id="splashScreen">
+      <div class="flex gap-4 mb-4">
+          <div class="splash-icon">🥷</div>
+          <div class="splash-icon delay">🐲</div>
+      </div>
+      <h1 class="splash-logo">DESA<br>MAHULU</h1>
+      <p class="text-white text-opacity-70 mb-8 font-mono tracking-widest text-sm">MATHNOLOGY EDITION</p>
+      <button id="startBtn" class="start-btn">MULAI GAME</button>
+  </div>
+
   <div id="app" class="w-full h-full flex flex-col items-center">
    
    <div class="text-center pt-4 pb-2 px-3 w-full relative z-10 flex flex-col items-center shrink-0">
     <h1 class="epic-title mb-1 leading-none">Desa Mahulu</h1>
-    
     <div class="flex items-center justify-between w-full max-w-xs px-2 mb-1">
         <div class="flex gap-2">
             <div class="bg-slate-800 border border-slate-600 px-2 py-1 rounded-lg text-white text-xs font-bold flex items-center gap-1">
@@ -137,14 +146,15 @@
                 <span>❤️</span> <span id="livesCount" class="text-green-400 text-sm">2</span>
             </div>
         </div>
-        <div id="studyIndicator" class="grayscale opacity-30 transition-all text-xl" title="Sudah Belajar">📖</div>
+        <button id="openScrollBtn" class="bg-slate-800 border border-slate-600 px-3 py-1 rounded-lg flex items-center gap-2 transition-all grayscale opacity-30" disabled>
+            <span class="text-lg">📜</span>
+            <span class="text-[10px] text-white font-bold uppercase">Rumus</span>
+        </button>
     </div>
-    
     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Swipe atau Tekan Tombol</p>
    </div>
    
-   <div class="flex-1 flex flex-col items-center justify-center w-full px-2">
-     
+   <div class="flex-1 flex flex-col items-center justify-center w-full px-2 overflow-y-auto">
      <div class="map-frame" id="touchArea">
         <div id="gameGrid"></div>
      </div>
@@ -156,74 +166,59 @@
        <button id="rightBtn" class="control-btn" style="grid-area: right;">→</button>
      </div>
      
-     <button id="resetBtn" class="mb-4 text-xs font-bold text-slate-500 bg-slate-800 px-4 py-2 rounded-full border border-slate-700 active:bg-slate-700">🔄 Reset Game</button>
+     <button id="resetBtn" class="text-xs font-bold text-slate-500 bg-slate-800 px-4 py-2 rounded-full border border-slate-700 active:bg-slate-700">🔄 Reset Game</button>
+     
+     <div class="brand-footer">MATHNOLOGY</div>
    </div>
 
    <div id="actionContainer" class="fixed bottom-6 left-0 right-0 flex justify-center gap-4 px-4 pointer-events-none z-50">
-       <button id="talkBtn" class="hidden pointer-events-auto bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 animate-bounce">
-           💬 BICARA
-       </button>
-       <button id="fightBtn" class="hidden pointer-events-auto bg-red-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg border-b-4 border-red-800 active:border-b-0 active:translate-y-1 animate-pulse">
-           ⚔️ SERANG
-       </button>
-       <button id="bossBtn" class="hidden pointer-events-auto bg-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg border-b-4 border-purple-800 active:border-b-0 active:translate-y-1 animate-pulse">
-           ☠️ LAWAN BOSS
-       </button>
+       <button id="talkBtn" class="hidden pointer-events-auto bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1">💬 BICARA</button>
+       <button id="fightBtn" class="hidden pointer-events-auto bg-red-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg border-b-4 border-red-800 active:border-b-0 active:translate-y-1">⚔️ SERANG</button>
+       <button id="bossBtn" class="hidden pointer-events-auto bg-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg border-b-4 border-purple-800 active:border-b-0 active:translate-y-1">☠️ LAWAN BOSS</button>
    </div>
 
-   <div id="learningModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/80">
+   <div id="learningModal" class="fixed inset-0 z-50 flex items-center justify-center hidden px-4 bg-black/80">
        <div class="win-modal bg-slate-900 border-4 border-blue-500 rounded-2xl p-6 text-center">
-           <div class="text-6xl mb-2">📖</div>
-           <h2 class="text-xl font-black text-blue-400 mb-2">TEMPAT BELAJAR</h2>
-           
-           <div class="bg-slate-800 p-3 rounded-lg text-left text-sm text-white mb-4 border border-slate-700">
-               <p class="mb-2 font-bold text-yellow-400">Rumus Translasi (Pergeseran)</p>
-               <p class="mb-2">Jika titik <span class="text-blue-300">A(x, y)</span> digeser sejauh <span class="text-green-300">T(a, b)</span>:</p>
-               <ul class="list-disc pl-5 mb-2 space-y-1">
-                   <li>Koordinat x ditambah a</li>
-                   <li>Koordinat y ditambah b</li>
-               </ul>
-               <div class="bg-black/30 p-2 rounded text-center font-mono text-yellow-200 border border-yellow-600/30">
-                   A'(x + a, y + b)
+           <div class="text-6xl mb-2">📜</div>
+           <h2 class="text-xl font-black text-blue-400 mb-2">GULUNGAN RUMUS</h2>
+           <div class="bg-slate-800 p-4 rounded-lg text-left text-sm text-white mb-4 border border-slate-700">
+               <p class="mb-3 font-bold text-yellow-400 text-center uppercase tracking-wide border-b border-slate-600 pb-2">Translasi (Pergeseran)</p>
+               <p class="mb-2">Memindahkan titik dengan menjumlahkan koordinatnya.</p>
+               <div class="bg-black/40 p-3 rounded-lg border border-blue-500/30 mb-3">
+                   <p class="font-mono text-lg text-center text-blue-300">A(x, y) + T(a, b)</p>
+                   <p class="text-center text-white my-1">⬇️</p>
+                   <p class="font-mono text-lg text-center text-green-400 font-bold">A'(x+a, y+b)</p>
                </div>
-               <p class="mt-2 text-xs text-slate-400 italic text-center">Hafalkan ini untuk mengalahkan Naga!</p>
            </div>
-           
-           <button id="closeLearningBtn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow">Saya Mengerti!</button>
+           <button id="closeLearningBtn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow active:bg-blue-700">Tutup & Lanjutkan</button>
        </div>
    </div>
 
-   <div id="fightModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/80 backdrop-blur-sm">
+   <div id="fightModal" class="fixed inset-0 z-50 flex items-center justify-center hidden px-4 bg-black/80 backdrop-blur-sm">
     <div class="win-modal bg-slate-900 border-4 border-slate-500 rounded-2xl p-4 text-center relative" id="fightModalFrame">
-     
      <div id="bossHeader" class="hidden flex-col items-center mb-2">
          <div class="text-5xl mb-1">🐲</div>
          <h2 class="text-xl font-black text-purple-400 uppercase">BOSS NAGA</h2>
          <div class="w-full bg-slate-700 rounded-full h-3 mt-1 relative overflow-hidden">
              <div id="bossHpBar" class="bg-gradient-to-r from-purple-600 to-fuchsia-500 h-full transition-all" style="width: 100%"></div>
          </div>
-         <p class="text-xs text-slate-400 mt-1">Jawab 3 soal benar berturut-turut!</p>
      </div>
-
      <div id="normalHeader" class="flex flex-col items-center mb-2">
         <div class="text-4xl mb-1">🐉</div>
         <h2 class="text-xl font-black text-white">PERTARUNGAN</h2>
      </div>
-     
      <div class="bg-slate-800 p-3 rounded-xl mb-3 text-left border border-slate-700 relative">
       <p id="questionText" class="text-sm font-bold text-white mb-3 leading-snug"></p>
       <div id="optionsContainer" class="flex flex-col gap-2"></div>
      </div>
-     
      <div id="feedbackContainer" class="hidden mb-2 p-2 rounded bg-slate-800">
       <p id="feedbackText" class="text-sm font-bold"></p>
      </div>
-     
      <button id="cancelFightBtn" class="text-xs text-slate-400 underline py-2">Kabur</button>
     </div>
    </div>
 
-   <div id="dialogModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/80">
+   <div id="dialogModal" class="fixed inset-0 z-50 flex items-center justify-center hidden px-4 bg-black/80">
     <div class="win-modal bg-amber-100 border-4 border-amber-400 rounded-2xl p-6 text-center">
      <div class="text-5xl mb-2">👴</div>
      <h2 class="text-lg font-black text-amber-900 mb-2">Petuah Kakek</h2>
@@ -232,7 +227,7 @@
     </div>
    </div>
 
-   <div id="winModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/90">
+   <div id="winModal" class="fixed inset-0 z-50 flex items-center justify-center hidden px-4 bg-black/90">
     <div class="win-modal bg-slate-900 border-4 border-purple-500 rounded-2xl p-6 text-center">
      <div class="text-6xl mb-4 animate-bounce">🏆</div>
      <h2 class="text-2xl font-black text-purple-400 mb-2">MENANG!</h2>
@@ -241,30 +236,41 @@
     </div>
    </div>
    
-   <div id="gameOverModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/90">
+   <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center hidden px-4 bg-black/90">
     <div class="win-modal bg-slate-900 border-4 border-red-800 rounded-2xl p-6 text-center">
      <div class="text-6xl mb-4">💀</div>
      <h2 class="text-2xl font-black text-red-500 mb-4">GAME OVER</h2>
      <button id="retryBtn" class="bg-red-700 text-white px-6 py-3 rounded-xl font-bold w-full shadow-lg">Coba Lagi</button>
     </div>
    </div>
-   
    <div id="confettiContainer" class="fixed inset-0 pointer-events-none z-[60]"></div>
   </div>
 
   <script>
-    // --- GAME DATA ---
+    document.getElementById('startBtn').addEventListener('click', () => {
+        const splash = document.getElementById('splashScreen');
+        const app = document.getElementById('app');
+        splash.classList.add('fade-out');
+        setTimeout(() => { splash.style.display = 'none'; app.classList.add('visible'); }, 800);
+    });
+
+    // --- HOTS QUESTIONS (Analysis & Context) ---
     const translationQuestions = [
-      { question: "A(3, 2) ditranslasi T(4, 1). A' = ...", options: ["(7, 3)", "(1, 1)", "(12, 2)", "(7, 2)"], correct: 0 },
-      { question: "B(-2, 5) ditranslasi T(3, -2). B' = ...", options: ["(1, 7)", "(1, 3)", "(-5, 3)", "(-5, 7)"], correct: 1 },
-      { question: "C(1, 4) menjadi C'(5, 6). T = ...", options: ["(4, 2)", "(6, 10)", "(-4, -2)", "(2, 4)"], correct: 0 },
-      { question: "D ditranslasi T(2, 3) jadi D'(5, 5). D = ...", options: ["(7, 8)", "(3, 2)", "(3, 8)", "(2, 2)"], correct: 1 },
-      { question: "P(2, 1) + T1(2, 0) + T2(0, 3). P'' = ...", options: ["(2, 4)", "(4, 1)", "(4, 4)", "(0, -2)"], correct: 2 },
-      { question: "Geser 3 kanan, 4 bawah. Vektornya?", options: ["(3, 4)", "(-3, 4)", "(3, -4)", "(-3, -4)"], correct: 2 },
-      { question: "A(1, 1) ditranslasi T(5, 5). A' = ...", options: ["(5, 5)", "(6, 6)", "(4, 4)", "(1, 5)"], correct: 1 },
-      { question: "K(0, 0) jadi K'(-3, 2). Translasinya?", options: ["(3, 2)", "(-3, -2)", "(-3, 2)", "(3, -2)"], correct: 2 },
-      { question: "M(-1, -2) ditranslasi T(2, 5). M' = ...", options: ["(1, 3)", "(-3, -7)", "(1, 7)", "(3, 3)"], correct: 0 },
-      { question: "Q(4, -1) ditranslasi T(-2, 3). Q' = ...", options: ["(2, -4)", "(6, 2)", "(2, 2)", "(6, -4)"], correct: 2 }
+      // Analisis: Mencari Vektor
+      { question: "Ninja berada di (2, 3) dan melompat ke (5, 4). Jurus translasi apa yang digunakan?", options: ["T = (3, 1)", "T = (7, 7)", "T = (-3, -1)", "T = (1, 3)"], correct: 0 },
+      // Analisis: Mencari Titik Awal (Reverse Logic)
+      { question: "Setelah digeser T(2, -1), posisi Naga menjadi (4, 4). Dimana posisi awal Naga?", options: ["(2, 5)", "(6, 3)", "(2, 3)", "(6, 5)"], correct: 0 },
+      // Komposisi: Dua Langkah
+      { question: "Titik A(1, 1) digeser T(1, 0), lalu digeser lagi T(0, 2). Posisi akhirnya adalah...", options: ["(2, 3)", "(1, 3)", "(2, 1)", "(2, 2)"], correct: 0 },
+      // Pola/Relasi
+      { question: "Jika A(0,0) berubah menjadi A'(3,3), maka titik B(2,1) dengan pergeseran yang sama akan menjadi...", options: ["B'(5, 4)", "B'(5, 1)", "B'(3, 3)", "B'(6, 3)"], correct: 0 },
+      // Kontekstual / Cerita
+      { question: "Ninja ingin menyerang Naga. Ia harus bergerak 2 langkah ke Kanan dan 3 langkah ke Bawah. Vektornya adalah...", options: ["(2, -3)", "(-2, 3)", "(2, 3)", "(-2, -3)"], correct: 0 },
+      { question: "Sebuah panah melesat dari (5, 5) dan mengenai sasaran di (2, 5). Panah itu bergerak sejauh...", options: ["T = (-3, 0)", "T = (3, 0)", "T = (0, -3)", "T = (-3, 5)"], correct: 0 },
+      { question: "Titik P(x, y) digeser oleh T(a, b). Rumus yang BENAR untuk mencari bayangannya adalah...", options: ["(x+a, y+b)", "(x-a, y-b)", "(x+b, y+a)", "(x.a, y.b)"], correct: 0 },
+      { question: "Segitiga ABC digeser. Jika titik A berubah posisi, apakah bentuk segitiganya berubah?", options: ["Tidak, bentuk tetap", "Ya, jadi lebih besar", "Ya, jadi miring", "Tergantung arahnya"], correct: 0 },
+      { question: "Ninja di (1,1). Ia menggunakan jurus 'Bayangan Ganda' (Translasi 2x lipat) dari T(1,2). Posisi akhirnya...", options: ["(3, 5)", "(2, 3)", "(2, 4)", "(3, 3)"], correct: 0 },
+      { question: "Naga menyembur api sepanjang garis lurus. Koordinat y tidak berubah, tapi x bertambah 5. Translasinya adalah...", options: ["(5, 0)", "(0, 5)", "(5, 5)", "(-5, 0)"], correct: 0 }
     ];
 
     let gameState = {
@@ -276,12 +282,10 @@
     };
 
     function generateLevel() {
-      // Peta sederhana
       gameState.walls = [{x:3,y:2,e:'🌳'},{x:2,y:3,e:'🪨'},{x:3,y:3,e:'🏠'},{x:0,y:3,e:'🏔️'},{x:5,y:2,e:'⛰️'},{x:2,y:5,e:'🌳'},{x:4,y:0,e:'🪨'}];
       gameState.dragons = [{x:3,y:0},{x:5,y:1},{x:0,y:4}];
     }
 
-    // --- CORE FUNCTIONS ---
     function initGame() {
       gameState.robotPos = {x:0,y:0}; gameState.starPos = {x:1,y:1}; gameState.lives = 2;
       gameState.learnSpot = {x:2,y:0,visited:false}; 
@@ -298,20 +302,16 @@
           const cell = document.createElement('div');
           let cls = ((x+y)%2===0) ? 'grass-dark' : 'grass-light';
           let content = '';
-          
           const wall = gameState.walls.find(w=>w.x===x&&w.y===y);
           const drag = gameState.dragons.find(d=>d.x===x&&d.y===y);
           const boss = (gameState.bossDragon.alive && gameState.bossDragon.x===x && gameState.bossDragon.y===y);
           const learn = (!gameState.learnSpot.visited && gameState.learnSpot.x===x && gameState.learnSpot.y===y);
-
           if(wall) { cls='cell-wall'; content=`<span class="char-icon">${wall.e}</span>`; }
-          else if(boss) { cls='cell-boss'; content='<span class="char-icon">🐲</span>'; } /* BOSS EMOJI */
+          else if(boss) { cls='cell-boss'; content='<span class="char-icon">🐲</span>'; }
           else if(drag) { cls='cell-danger'; content='<span class="char-icon">🐉</span>'; }
           else if(learn) { cls='cell-learn'; content='<span class="char-icon animate-bounce">📜</span>'; }
           else if(x===gameState.starPos.x && y===gameState.starPos.y) { cls='cell-safe'; content='<span class="char-icon">👴</span>'; }
-          
           if(x===gameState.robotPos.x && y===gameState.robotPos.y) content='<span class="char-icon robot">🥷</span>';
-
           cell.className = `grid-cell ${cls} flex items-center justify-center`;
           cell.innerHTML = content;
           grid.appendChild(cell);
@@ -327,16 +327,12 @@
             !gameState.dragons.some(d=>d.x===nx&&d.y===ny) && 
             !(gameState.bossDragon.alive && gameState.bossDragon.x===nx && gameState.bossDragon.y===ny) &&
             !(gameState.starPos.x===nx && gameState.starPos.y===ny)) {
-          
           gameState.robotPos = {x:nx, y:ny};
-          
-          // Cek Tempat Belajar
           if(!gameState.learnSpot.visited && nx===gameState.learnSpot.x && ny===gameState.learnSpot.y) {
              gameState.learnSpot.visited = true;
              document.getElementById('learningModal').classList.remove('hidden'); gameState.showingDialog = true;
              updateUI();
           }
-
           renderGrid(); checkInteractions();
         }
       }
@@ -345,18 +341,11 @@
     function checkInteractions() {
       const px = gameState.robotPos.x, py = gameState.robotPos.y;
       const isNear = (ox, oy) => (Math.abs(px-ox) + Math.abs(py-oy)) <= 1;
-      
       const talkBtn = document.getElementById('talkBtn');
       const fightBtn = document.getElementById('fightBtn');
       const bossBtn = document.getElementById('bossBtn');
-      
-      // Reset Visibility (Tanpa Suara)
       talkBtn.classList.add('hidden'); fightBtn.classList.add('hidden'); bossBtn.classList.add('hidden');
-
-      if(isNear(gameState.starPos.x, gameState.starPos.y)) {
-         talkBtn.classList.remove('hidden');
-      }
-      
+      if(isNear(gameState.starPos.x, gameState.starPos.y)) { talkBtn.classList.remove('hidden'); }
       let enemyFound = false;
       for(let d of gameState.dragons) {
         if(isNear(d.x, d.y)) {
@@ -372,31 +361,33 @@
       let dCount = gameState.dragons.length + (gameState.bossDragon.alive ? 1 : 0);
       document.getElementById('dragonCount').textContent = dCount;
       document.getElementById('livesCount').textContent = gameState.lives;
-      
-      const studyInd = document.getElementById('studyIndicator');
-      if(gameState.learnSpot.visited) { studyInd.classList.remove('grayscale','opacity-30'); }
-      else { studyInd.classList.add('grayscale','opacity-30'); }
+      const scrollBtn = document.getElementById('openScrollBtn');
+      if(gameState.learnSpot.visited) {
+          scrollBtn.classList.remove('grayscale', 'opacity-30');
+          scrollBtn.classList.add('scroll-active', 'border-blue-500', 'bg-blue-900');
+          scrollBtn.disabled = false;
+      } else {
+          scrollBtn.classList.add('grayscale', 'opacity-30');
+          scrollBtn.classList.remove('scroll-active', 'border-blue-500', 'bg-blue-900');
+          scrollBtn.disabled = true;
+      }
     }
 
-    // --- FIGHT LOGIC ---
     function startFight() {
       gameState.showingDialog = true;
       document.getElementById('fightModal').classList.remove('hidden');
       document.getElementById('feedbackContainer').classList.add('hidden');
-      
       const isBoss = gameState.currentEnemy === 'boss';
       document.getElementById('bossHeader').classList.toggle('hidden', !isBoss);
       document.getElementById('bossHeader').classList.toggle('flex', isBoss);
       document.getElementById('normalHeader').classList.toggle('hidden', isBoss);
       document.getElementById('fightModalFrame').style.borderColor = isBoss ? '#a855f7' : '#64748b';
       if(isBoss) updateBossHP();
-
       let qPool = translationQuestions.filter((_,i)=>!gameState.usedQuestions.includes(i));
       if(qPool.length===0) { gameState.usedQuestions=[]; qPool=translationQuestions; }
       const qIndex = Math.floor(Math.random()*qPool.length);
       gameState.currentQuestion = qPool[qIndex];
       gameState.usedQuestions.push(translationQuestions.indexOf(gameState.currentQuestion));
-
       document.getElementById('questionText').textContent = gameState.currentQuestion.question;
       const opts = document.getElementById('optionsContainer'); opts.innerHTML='';
       gameState.currentQuestion.options.forEach((opt,i)=>{
@@ -417,7 +408,6 @@
        const fb = document.getElementById('feedbackContainer');
        const ft = document.getElementById('feedbackText');
        fb.classList.remove('hidden');
-       
        if(idx === gameState.currentQuestion.correct) {
           if(gameState.currentEnemy==='boss') {
               gameState.bossDragon.hp--; updateBossHP();
@@ -427,7 +417,7 @@
                  setTimeout(endFight, 1500);
               } else {
                  ft.textContent=`SERANGAN MASUK! Sisa HP: ${gameState.bossDragon.hp}`; ft.className="text-yellow-400 font-bold text-sm";
-                 setTimeout(startFight, 1000); // Next round
+                 setTimeout(startFight, 1000); 
               }
           } else {
               gameState.dragons = gameState.dragons.filter(d=>d!==gameState.currentDragonObj);
@@ -437,8 +427,7 @@
           }
        } else {
           gameState.lives--; updateUI();
-          if(gameState.currentEnemy==='boss') { gameState.bossDragon.hp=3; updateBossHP(); } // Reset boss on wrong
-          
+          if(gameState.currentEnemy==='boss') { gameState.bossDragon.hp=3; updateBossHP(); } 
           if(gameState.lives<=0) {
               document.getElementById('fightModal').classList.add('hidden');
               document.getElementById('gameOverModal').classList.remove('hidden');
@@ -476,36 +465,39 @@
        }
     }
 
-    // --- INPUT HANDLING ---
-    // Touch / Swipe
     let touchStartX = 0, touchStartY = 0;
     const touchArea = document.getElementById('touchArea');
     touchArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive:false});
     touchArea.addEventListener('touchend', e => {
        const dx = e.changedTouches[0].screenX - touchStartX;
        const dy = e.changedTouches[0].screenY - touchStartY;
-       if(Math.abs(dx) > Math.abs(dy)) {
-           if(Math.abs(dx)>30) move(dx>0?1:-1, 0);
-       } else {
-           if(Math.abs(dy)>30) move(0, dy>0?1:-1);
-       }
+       if(Math.abs(dx) > Math.abs(dy)) { if(Math.abs(dx)>30) move(dx>0?1:-1, 0); } else { if(Math.abs(dy)>30) move(0, dy>0?1:-1); }
     }, {passive:false});
 
-    // Buttons
     document.getElementById('upBtn').onclick = ()=>move(0,-1);
     document.getElementById('downBtn').onclick = ()=>move(0,1);
     document.getElementById('leftBtn').onclick = ()=>move(-1,0);
     document.getElementById('rightBtn').onclick = ()=>move(1,0);
     
-    // Actions
     document.getElementById('talkBtn').onclick = () => {
-        document.getElementById('grandpaMessage').textContent = (!gameState.bossDragon.alive) ? "Luar biasa! Desa aman." : "Cari buku di utara untuk belajar rumus Translasi!";
-        document.getElementById('dialogModal').classList.remove('hidden'); gameState.showingDialog = true;
+        const msg = (!gameState.bossDragon.alive && gameState.dragons.length === 0) 
+            ? "Luar biasa! Desa aman." 
+            : "Temukan gulungan rumus dan kalahkan semua naga di desa ini, maka akan ku berikan petunjuk untuk tantangan berikutnya!";
+        document.getElementById('grandpaMessage').textContent = msg;
+        document.getElementById('dialogModal').classList.remove('hidden'); 
+        gameState.showingDialog = true;
     };
+    
+    document.getElementById('openScrollBtn').onclick = () => {
+        if(gameState.learnSpot.visited) {
+            document.getElementById('learningModal').classList.remove('hidden'); 
+            gameState.showingDialog = true;
+        }
+    };
+
     document.getElementById('fightBtn').onclick = startFight;
     document.getElementById('bossBtn').onclick = startFight;
     
-    // Close Modals
     document.getElementById('closeDialogBtn').onclick = ()=>{ document.getElementById('dialogModal').classList.add('hidden'); gameState.showingDialog=false; };
     document.getElementById('closeLearningBtn').onclick = ()=>{ document.getElementById('learningModal').classList.add('hidden'); gameState.showingDialog=false; };
     document.getElementById('cancelFightBtn').onclick = ()=>{ document.getElementById('fightModal').classList.add('hidden'); gameState.showingDialog=false; };
