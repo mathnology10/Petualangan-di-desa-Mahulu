@@ -1,0 +1,596 @@
+Tentu, saya mengerti. Tampilan grid yang hanya kotak-kotak transparan memang terlihat sedikit "kaku" dan kurang atmosfer game-nya.
+Mari kita ubah desain map-nya secara total agar terlihat seperti Peta RPG Klasik (Tile-based RPG).
+Peningkatan yang saya lakukan:
+ * Efek Lantai Catur (Checkerboard): Menggunakan dua warna hijau selang-seling (Rumput Terang & Rumput Gelap) agar grid lebih mudah dilihat dan terlihat seperti tanah.
+ * Dekorasi Alam: Menambahkan sedikit variasi "bunga/rumput liar" kecil secara acak di lantai agar tidak kosong.
+ * Styling Dinding: Kotak dinding (pohon/batu) sekarang memiliki background lebih gelap dan border yang membuatnya terlihat "padat" (tidak bisa dilewati).
+ * Efek Bayangan: Menambahkan bayangan di bawah Ninja, Naga, dan Kakek agar karakter terlihat menyatu dengan tanah, bukan melayang.
+ * Bingkai Peta: Menambahkan bingkai kayu (wood texture effect) di sekeliling peta.
+Silakan salin kode lengkap di bawah ini:
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ninja Dragon Hunter</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { box-sizing: border-box; }
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; overflow: hidden; }
+
+    /* --- STYLE JUDUL (SAMA SEPERTI SEBELUMNYA) --- */
+    .game-title-container { position: relative; padding: 10px 0; }
+    .epic-title {
+      font-family: 'Poppins', sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+      background: linear-gradient(180deg, #fffbeb 0%, #fbbf24 40%, #d97706 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 0px rgba(180, 83, 9, 1)) drop-shadow(0 6px 4px rgba(0,0,0,0.4));
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3); animation: titleFloat 3s ease-in-out infinite;
+    }
+    @keyframes titleFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.02); } }
+    .title-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120%; height: 100%;
+      background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.3) 0%, rgba(0,0,0,0) 70%); z-index: -1; pointer-events: none;
+    }
+
+    /* --- MAP & GRID STYLING BARU --- */
+    .map-frame {
+      background-color: #5d4037; /* Warna Kayu Tua */
+      border: 4px solid #3e2723;
+      border-radius: 16px;
+      padding: 8px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1);
+    }
+
+    .grid-cell {
+      position: relative;
+      transition: transform 0.1s ease;
+      overflow: hidden;
+    }
+    
+    /* Pola Lantai Catur (Rumput) */
+    .grass-light { background-color: #86efac; } /* Hijau Muda */
+    .grass-dark { background-color: #4ade80; }  /* Hijau Sedikit Gelap */
+    
+    /* Dekorasi rumput kecil di lantai */
+    .grass-deco::after {
+      content: '🌱';
+      font-size: 0.8rem;
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .cell-wall {
+      background-color: #3f6212 !important; /* Hijau Tua Hutan */
+      border-bottom: 4px solid #14532d;
+      border-radius: 8px;
+    }
+
+    .cell-safe {
+      background-color: rgba(251, 191, 36, 0.3) !important;
+      border: 2px dashed #fbbf24;
+    }
+
+    .cell-danger {
+      background-color: rgba(239, 68, 68, 0.3) !important;
+      border: 2px solid #ef4444;
+      animation: dangerGlow 2s infinite;
+    }
+
+    @keyframes dangerGlow {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2); }
+      50% { box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.5); }
+    }
+
+    /* Karakter & Objek */
+    .character-shadow {
+      filter: drop-shadow(0 4px 2px rgba(0,0,0,0.3));
+    }
+
+    .robot { font-size: 2rem; animation: robotBounce 0.5s ease; z-index: 10; }
+    @media (min-width: 640px) { .robot { font-size: 2.8rem; } }
+    @keyframes robotBounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2) translateY(-5px); } }
+    
+    .star { font-size: 2rem; z-index: 5; }
+    @media (min-width: 640px) { .star { font-size: 2.8rem; } }
+    
+    .dragon { font-size: 2rem; animation: dragonPulse 1.5s infinite; z-index: 8; }
+    @media (min-width: 640px) { .dragon { font-size: 2.8rem; } }
+    @keyframes dragonPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.9; } }
+
+    /* UI Elements */
+    .control-btn {
+      transition: all 0.1s ease;
+      box-shadow: 0 6px 0 #b45309; /* Shadow tebal tombol */
+      border-bottom: none;
+    }
+    .control-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b45309;
+    }
+    
+    /* Modal Styles */
+    .win-modal { animation: modalSlideIn 0.4s ease; }
+    @keyframes modalSlideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    
+    .screen-flash {
+      position: fixed; inset: 0; background: radial-gradient(circle, rgba(255,200,0,0.6) 0%, transparent 70%);
+      pointer-events: none; animation: flashEffect 0.5s ease-out;
+    }
+    @keyframes flashEffect { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+    
+    .shake-screen { animation: screenShake 0.4s ease; }
+    @keyframes screenShake { 
+      0%, 100% { transform: translate(0, 0); } 
+      10%, 30%, 50%, 70%, 90% { transform: translate(-6px, 6px); } 
+      20%, 40%, 60%, 80% { transform: translate(6px, -6px); } 
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full flex flex-col" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+  
+   <div class="text-center py-2 px-3 relative z-10">
+    <div class="game-title-container mb-2">
+      <div class="title-glow"></div>
+      <h1 id="gameTitle" class="epic-title text-3xl sm:text-5xl text-center leading-tight">Desa Mahulu</h1>
+    </div>
+
+    <div class="flex items-center justify-center gap-2 sm:gap-4 mb-0.5 sm:mb-3">
+     <div class="text-3xl sm:text-5xl animate-bounce" style="animation-duration: 1s;">🥷</div>
+     <div class="text-2xl sm:text-4xl font-black px-3 py-1 sm:px-5 sm:py-2 rounded-xl transform rotate-[-5deg]" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.1em; border: 2px solid white; box-shadow: 0 4px 0 rgba(0,0,0,0.3);">VS</div>
+     <div class="text-3xl sm:text-5xl animate-bounce" style="animation-duration: 1s; animation-delay: 0.5s;">🐉</div>
+    </div>
+    <p id="instructionText" class="text-xs sm:text-xl font-semibold tracking-wide" style="color: #94a3b8; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Kalahkan semua naga di desa!</p>
+   </div>
+   
+   <div class="flex-1 flex items-center justify-center px-2 sm:px-8 py-1 overflow-auto">
+    <div class="flex flex-col items-center gap-2 sm:gap-6 w-full max-w-md">
+     
+     <div class="flex gap-4 sm:gap-8 text-sm sm:text-2xl font-bold" style="color: #ffffff;">
+      <div class="flex items-center gap-2 bg-slate-800 border-2 border-slate-600 px-3 py-1 sm:px-5 sm:py-2 rounded-xl shadow-lg">
+       <span>🐉</span> <span id="dragonCount" class="text-red-400">4</span>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-800 border-2 border-slate-600 px-3 py-1 sm:px-5 sm:py-2 rounded-xl shadow-lg">
+       <span>❤️</span> <span id="livesCount" class="text-green-400">2</span>
+      </div>
+     </div>
+     
+     <div class="map-frame">
+        <div id="gameGrid" class="grid gap-0" style="grid-template-columns: repeat(6, minmax(42px, 60px)); grid-template-rows: repeat(6, minmax(42px, 60px));">
+        </div>
+     </div>
+
+     <div class="flex flex-col items-center gap-1 sm:gap-3">
+       <button id="upBtn" class="control-btn w-12 h-12 sm:w-16 sm:h-16 rounded-xl text-xl sm:text-3xl font-bold bg-yellow-400 text-yellow-900 border-2 border-yellow-500">↑</button>
+      <div class="flex gap-2 sm:gap-4">
+        <button id="leftBtn" class="control-btn w-12 h-12 sm:w-16 sm:h-16 rounded-xl text-xl sm:text-3xl font-bold bg-yellow-400 text-yellow-900 border-2 border-yellow-500">←</button> 
+        <button id="downBtn" class="control-btn w-12 h-12 sm:w-16 sm:h-16 rounded-xl text-xl sm:text-3xl font-bold bg-yellow-400 text-yellow-900 border-2 border-yellow-500">↓</button> 
+        <button id="rightBtn" class="control-btn w-12 h-12 sm:w-16 sm:h-16 rounded-xl text-xl sm:text-3xl font-bold bg-yellow-400 text-yellow-900 border-2 border-yellow-500">→</button>
+      </div>
+      <button id="resetBtn" class="mt-2 px-4 py-2 sm:px-6 sm:py-3 rounded-xl text-xs sm:text-lg font-bold transition-all shadow-lg bg-red-600 text-white border-b-4 border-red-800 hover:bg-red-500 active:border-b-0 active:translate-y-1">🔄 Reset Peta</button>
+     </div>
+     
+     <div class="mt-2">
+      <p id="mathnologyText" class="text-xs font-bold tracking-[0.3em] text-slate-600">MATHNOLOGY</p>
+     </div>
+    </div>
+   </div>
+
+   <div id="talkButton" class="fixed hidden items-center justify-center px-4" style="z-index: 100;"><button id="talkBtn" class="px-6 py-3 rounded-2xl text-base sm:text-xl font-bold transition-all shadow-[0_4px_0_#065f46] active:shadow-none active:translate-y-1 border-2 border-white bg-emerald-500 text-white flex items-center gap-2">💬 <span class="drop-shadow-md">Berbicara</span></button></div>
+   <div id="fightButton" class="fixed hidden items-center justify-center px-4" style="z-index: 100;"><button id="fightBtn" class="px-6 py-3 rounded-2xl text-base sm:text-xl font-bold transition-all shadow-[0_4px_0_#991b1b] active:shadow-none active:translate-y-1 border-2 border-white animate-pulse bg-red-600 text-white flex items-center gap-2">⚔️ <span class="drop-shadow-md">SERANG!</span></button></div>
+
+   <div id="dialogModal" class="fixed inset-0 items-center justify-center hidden px-4" style="background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 200;">
+    <div class="win-modal text-center p-6 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full border-4 border-yellow-400 bg-gradient-to-br from-amber-100 to-amber-300">
+     <div class="text-5xl sm:text-7xl mb-4 shadow-xl rounded-full bg-white w-24 h-24 mx-auto flex items-center justify-center border-4 border-amber-500">👴</div>
+     <h2 class="text-xl sm:text-2xl font-black mb-3 text-amber-900 uppercase tracking-wide">Petuah Kakek</h2>
+     <div class="bg-white bg-opacity-60 p-4 rounded-xl mb-6 border border-amber-200">
+        <p id="grandpaMessage" class="text-sm sm:text-lg font-bold text-amber-900 leading-relaxed"></p>
+     </div>
+     <button id="closeDialogBtn" class="w-full py-3 rounded-xl text-lg font-bold shadow-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors">Siap Laksanakan!</button>
+    </div>
+   </div>
+
+   <div id="fightModal" class="fixed inset-0 items-center justify-center hidden px-4" style="background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); z-index: 200;">
+    <div class="win-modal text-center p-5 sm:p-8 rounded-3xl shadow-2xl max-w-2xl w-full border-4 border-red-500 bg-slate-900">
+     <div class="flex justify-center -mt-16 mb-4">
+        <div class="bg-red-600 p-4 rounded-full border-4 border-slate-900 shadow-xl text-5xl">🐉</div>
+     </div>
+     <h2 class="text-xl sm:text-3xl font-black mb-2 text-white tracking-wider">PERTARUNGAN MATEMATIKA</h2>
+     <p class="text-sm sm:text-base text-yellow-400 mb-6 font-mono">Level: SEDANG // Mode: Translasi</p>
+     
+     <div class="bg-slate-800 p-4 sm:p-6 rounded-2xl mb-4 text-left border border-slate-700 shadow-inner">
+      <p id="questionText" class="text-base sm:text-xl font-bold mb-6 text-white leading-relaxed"></p>
+      <div id="optionsContainer" class="flex flex-col gap-3"></div>
+     </div>
+     
+     <div id="feedbackContainer" class="hidden mb-4 p-3 rounded-xl bg-slate-800">
+      <p id="feedbackText" class="text-lg font-bold"></p>
+     </div>
+     
+     <button id="cancelFightBtn" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Kabur (Pengecut)</button>
+    </div>
+   </div>
+
+   <div id="victoryModal" class="fixed inset-0 items-center justify-center hidden px-4" style="background: rgba(0,0,0,0.8); z-index: 200;">
+    <div class="win-modal text-center p-8 rounded-3xl border-4 border-green-500 bg-slate-900 text-white max-w-sm w-full">
+     <div class="text-6xl mb-4">✨⚔️✨</div>
+     <h2 class="text-2xl font-black text-green-400 mb-2">MENANG!</h2>
+     <p class="mb-6">Naga berhasil dikalahkan!</p>
+     <button id="closeVictoryBtn" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold w-full">Lanjut</button>
+    </div>
+   </div>
+
+   <div id="winModal" class="fixed inset-0 items-center justify-center hidden px-4" style="background: rgba(0,0,0,0.9);">
+    <div class="win-modal text-center p-10 rounded-3xl border-4 border-pink-500 bg-slate-900 text-white max-w-md w-full">
+     <div class="text-7xl mb-6 animate-bounce">🏆</div>
+     <h2 class="text-3xl font-black text-pink-400 mb-4">MISI SELESAI!</h2>
+     <p class="text-lg mb-8 text-slate-300">Desa Mahulu aman berkat kemampuan matematikamu.</p>
+     <button id="playAgainBtn" class="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-xl font-bold w-full shadow-lg hover:scale-105 transition-transform">Petualangan Baru</button>
+    </div>
+   </div>
+
+   <div id="gameOverModal" class="fixed inset-0 items-center justify-center hidden px-4" style="background: rgba(0,0,0,0.9);">
+    <div class="win-modal text-center p-10 rounded-3xl border-4 border-red-800 bg-slate-900 text-white max-w-md w-full">
+     <div class="text-7xl mb-6">💀</div>
+     <h2 class="text-3xl font-black text-red-500 mb-4">GAME OVER</h2>
+     <p class="text-lg mb-8 text-slate-300">Jangan menyerah, Ninja!</p>
+     <button id="retryBtn" class="bg-red-700 text-white px-8 py-4 rounded-xl font-bold w-full shadow-lg">Coba Lagi</button>
+    </div>
+   </div>
+   
+   <div id="confettiContainer" class="fixed inset-0 pointer-events-none"></div>
+  </div>
+
+  <script>
+    const defaultConfig = {
+      game_title: "Desa Mahulu",
+      instruction_text: "Kalahkan semua naga di desa!",
+      win_message: "Semua Naga Dikalahkan!"
+    };
+
+    let gameState = {
+      robotPos: { x: 0, y: 0 },
+      starPos: { x: 1, y: 1 },
+      gridSize: 6,
+      walls: [],
+      dragons: [],
+      defeatedDragons: 0,
+      showingDialog: false,
+      currentDragon: null,
+      lives: 2,
+      currentQuestion: null,
+      usedQuestions: []
+    };
+    
+    const translationQuestions = [
+      { question: "Titik A(3, 2) ditranslasi oleh T = (4, 1). Koordinat bayangan A' adalah...", options: ["A'(7, 3)", "A'(1, 1)", "A'(12, 2)", "A'(7, 2)"], correct: 0 },
+      { question: "Bayangan titik B(-2, 5) oleh translasi T = (3, -2) adalah...", options: ["B'(1, 7)", "B'(1, 3)", "B'(-5, 3)", "B'(-5, 7)"], correct: 1 },
+      { question: "Jika titik C(1, 4) bergeser menjadi C'(5, 6), maka vektor translasinya adalah...", options: ["T = (4, 2)", "T = (6, 10)", "T = (-4, -2)", "T = (2, 4)"], correct: 0 },
+      { question: "Titik D ditranslasi oleh T = (2, 3) menghasilkan bayangan D'(5, 5). Koordinat awal titik D adalah...", options: ["D(7, 8)", "D(3, 2)", "D(3, 8)", "D(2, 2)"], correct: 1 },
+      { question: "Titik P(2, 1) ditranslasi dua kali berturut-turut oleh T1=(2, 0) dan T2=(0, 3). Bayangan akhirnya adalah...", options: ["P''(2, 4)", "P''(4, 1)", "P''(4, 4)", "P''(0, -2)"], correct: 2 },
+      { question: "Sebuah titik digeser 3 satuan ke kanan dan 4 satuan ke bawah. Vektor translasinya ditulis sebagai...", options: ["(3, 4)", "(-3, 4)", "(3, -4)", "(-3, -4)"], correct: 2 },
+      { question: "Segitiga ABC memiliki titik A(1, 1). Jika ditranslasi oleh T=(5, 5), maka bayangan titik A adalah...", options: ["A'(5, 5)", "A'(6, 6)", "A'(4, 4)", "A'(1, 5)"], correct: 1 },
+      { question: "Jika bayangan titik K(0, 0) adalah K'(-3, 2), maka translasinya adalah...", options: ["T = (3, 2)", "T = (-3, -2)", "T = (-3, 2)", "T = (3, -2)"], correct: 2 },
+      { question: "Titik M(-1, -2) ditranslasi oleh T=(2, 5). Hasilnya adalah...", options: ["M'(1, 3)", "M'(-3, -7)", "M'(1, 7)", "M'(3, 3)"], correct: 0 },
+      { question: "Bayangan titik Q(4, -1) jika ditranslasi sejauh T=(-2, 3) adalah...", options: ["(2, -4)", "(6, 2)", "(2, 2)", "(6, -4)"], correct: 2 }
+    ];
+    
+    function generateWalls() {
+      return [
+        { x: 3, y: 2, emoji: '🌳' }, { x: 2, y: 3, emoji: '🪨' },
+        { x: 3, y: 3, emoji: '🏠' }, { x: 0, y: 3, emoji: '🏔️' },
+        { x: 5, y: 2, emoji: '⛰️' }, { x: 2, y: 5, emoji: '🌳' },
+        { x: 4, y: 0, emoji: '🪨' }, { x: 5, y: 5, emoji: '🏔️' }
+      ];
+    }
+    
+    function generateDragons() {
+      return [{ x: 3, y: 0 }, { x: 5, y: 1 }, { x: 0, y: 4 }, { x: 4, y: 5 }];
+    }
+    
+    function isWall(x, y) { return gameState.walls.some(w => w.x === x && w.y === y); }
+    function isDragon(x, y) { return gameState.dragons.some(d => d.x === x && d.y === y); }
+    function isGrandpa(x, y) { return x === gameState.starPos.x && y === gameState.starPos.y; }
+
+    function initGame() {
+      gameState.robotPos = { x: 0, y: 0 };
+      gameState.starPos = { x: 1, y: 1 };
+      gameState.lives = 2;
+      
+      if (gameState.walls.length === 0) gameState.walls = generateWalls();
+      if (gameState.dragons.length === 0 || gameState.defeatedDragons > 0) gameState.dragons = generateDragons();
+      
+      gameState.defeatedDragons = 0;
+      gameState.showingDialog = false;
+      gameState.currentDragon = null;
+      gameState.currentQuestion = null;
+      gameState.usedQuestions = [];
+      updateDragonCount();
+      updateLivesCount();
+      renderGrid();
+      checkTalkButton();
+      checkFightButton();
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('gameGrid');
+      grid.innerHTML = '';
+      
+      for (let y = 0; y < gameState.gridSize; y++) {
+        for (let x = 0; x < gameState.gridSize; x++) {
+          const cell = document.createElement('div');
+          
+          // --- LOGIKA TAMPILAN MAP BARU ---
+          // 1. Tentukan Background Dasar (Checkerboard)
+          const isDark = (x + y) % 2 === 0;
+          let baseClass = isDark ? 'grass-dark' : 'grass-light';
+          
+          // 2. Tambahkan dekorasi acak (bunga/rumput kecil) pada sel kosong
+          const hasDeco = Math.random() > 0.7;
+          let extraClass = hasDeco ? 'grass-deco' : '';
+
+          const wall = gameState.walls.find(w => w.x === x && w.y === y);
+          const dragon = gameState.dragons.find(d => d.x === x && d.y === y);
+          
+          // 3. Reset style jika ada objek khusus
+          if (wall) {
+             baseClass = 'cell-wall';
+             extraClass = '';
+          }
+          
+          cell.className = `grid-cell ${baseClass} ${extraClass} flex items-center justify-center`;
+          
+          if (x === gameState.robotPos.x && y === gameState.robotPos.y) {
+            cell.innerHTML = '<span class="robot character-shadow">🥷</span>';
+          } else if (x === gameState.starPos.x && y === gameState.starPos.y) {
+            cell.className = `grid-cell cell-safe flex items-center justify-center`;
+            cell.innerHTML = '<span class="star character-shadow">👴</span>';
+          } else if (dragon) {
+            cell.className = `grid-cell cell-danger flex items-center justify-center`;
+            cell.innerHTML = '<span class="dragon character-shadow">🐉</span>';
+          } else if (wall) {
+            cell.innerHTML = `<span class="star character-shadow">${wall.emoji}</span>`;
+          }
+          
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function moveRobot(dx, dy) {
+      const newX = gameState.robotPos.x + dx;
+      const newY = gameState.robotPos.y + dy;
+      
+      if (newX >= 0 && newX < gameState.gridSize && newY >= 0 && newY < gameState.gridSize && 
+          !isWall(newX, newY) && !isDragon(newX, newY) && !isGrandpa(newX, newY)) {
+        gameState.robotPos.x = newX;
+        gameState.robotPos.y = newY;
+        renderGrid();
+        checkTalkButton();
+        checkFightButton();
+      }
+    }
+
+    function isNearGrandpa() {
+      return (Math.abs(gameState.robotPos.x - gameState.starPos.x) + Math.abs(gameState.robotPos.y - gameState.starPos.y)) <= 1;
+    }
+
+    function findNearbyDragon() {
+      for (let dragon of gameState.dragons) {
+        if ((Math.abs(gameState.robotPos.x - dragon.x) + Math.abs(gameState.robotPos.y - dragon.y)) <= 1) return dragon;
+      }
+      return null;
+    }
+
+    function checkTalkButton() {
+      const talkButton = document.getElementById('talkButton');
+      if (isNearGrandpa() && !gameState.showingDialog) {
+        talkButton.classList.remove('hidden'); talkButton.classList.add('flex');
+        talkButton.style.top = '50%'; talkButton.style.left = '50%'; talkButton.style.transform = 'translate(-50%, -50%)';
+      } else {
+        talkButton.classList.add('hidden'); talkButton.classList.remove('flex');
+      }
+    }
+
+    function checkFightButton() {
+      const fightButton = document.getElementById('fightButton');
+      const nearbyDragon = findNearbyDragon();
+      if (nearbyDragon && !gameState.showingDialog) {
+        gameState.currentDragon = nearbyDragon;
+        fightButton.classList.remove('hidden'); fightButton.classList.add('flex');
+        fightButton.style.top = '50%'; fightButton.style.left = '50%'; fightButton.style.transform = 'translate(-50%, -50%)';
+      } else {
+        fightButton.classList.add('hidden'); fightButton.classList.remove('flex');
+      }
+    }
+
+    function showDialog() {
+      gameState.showingDialog = true;
+      const grandpaMessageElement = document.getElementById('grandpaMessage');
+      if (gameState.defeatedDragons === 4) {
+        grandpaMessageElement.textContent = 'Wasiat desa ini adalah "AGALAGAM". Silahkan melanjutkan perjalanan ke desa selanjutnya.';
+        document.getElementById('closeDialogBtn').textContent = 'Misi Selesai!';
+      } else {
+        grandpaMessageElement.textContent = 'Selamat datang di desa Mahulu, Ninja muda! Desa kami dikepung 4 Naga. Gunakan ilmu translasimu untuk mengalahkan mereka!';
+        document.getElementById('closeDialogBtn').textContent = 'Siap Laksanakan!';
+      }
+      document.getElementById('dialogModal').classList.remove('hidden'); document.getElementById('dialogModal').classList.add('flex');
+      checkTalkButton(); checkFightButton();
+    }
+
+    function hideDialog() {
+      gameState.showingDialog = false;
+      document.getElementById('dialogModal').classList.add('hidden'); document.getElementById('dialogModal').classList.remove('flex');
+      if (gameState.defeatedDragons === 4) setTimeout(showWinModal, 300);
+      else { checkTalkButton(); checkFightButton(); }
+    }
+
+    function showFightModal() {
+      gameState.showingDialog = true;
+      let availableQuestions = translationQuestions.filter((q, index) => !gameState.usedQuestions.includes(index));
+      if (availableQuestions.length === 0) { gameState.usedQuestions = []; availableQuestions = translationQuestions; }
+      
+      const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+      const selectedQuestion = availableQuestions[randomIndex];
+      gameState.usedQuestions.push(translationQuestions.indexOf(selectedQuestion));
+      gameState.currentQuestion = selectedQuestion;
+      
+      document.getElementById('questionText').textContent = gameState.currentQuestion.question;
+      const optionsContainer = document.getElementById('optionsContainer');
+      optionsContainer.innerHTML = '';
+      
+      gameState.currentQuestion.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'option-btn px-4 py-3 rounded-xl text-left font-bold transition-all shadow-md bg-slate-700 text-white hover:bg-slate-600 border border-slate-500';
+        button.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+        button.onclick = () => checkAnswer(index);
+        optionsContainer.appendChild(button);
+      });
+      
+      document.getElementById('feedbackContainer').classList.add('hidden');
+      document.getElementById('fightModal').classList.remove('hidden'); document.getElementById('fightModal').classList.add('flex');
+      checkTalkButton(); checkFightButton();
+    }
+
+    function checkAnswer(selectedIndex) {
+      const feedbackContainer = document.getElementById('feedbackContainer');
+      const feedbackText = document.getElementById('feedbackText');
+      const optionButtons = document.querySelectorAll('.option-btn');
+      optionButtons.forEach(btn => btn.disabled = true);
+      
+      if (selectedIndex === gameState.currentQuestion.correct) {
+        feedbackText.textContent = '✅ JURUS TRANSLASI BERHASIL!';
+        feedbackText.className = 'text-green-400 font-black text-xl';
+        feedbackContainer.classList.remove('hidden');
+        setTimeout(defeatDragon, 1500);
+      } else {
+        gameState.lives--;
+        updateLivesCount();
+        if (gameState.lives <= 0) {
+          feedbackText.textContent = `❌ TERKENA SEMBURAN API! (Game Over)`;
+          feedbackText.className = 'text-red-500 font-black text-xl';
+          feedbackContainer.classList.remove('hidden');
+          setTimeout(() => { hideFightModal(); showGameOverModal(); }, 1500);
+        } else {
+          feedbackText.textContent = `❌ SALAH HITUNG! Nyawa berkurang.`;
+          feedbackText.className = 'text-yellow-400 font-bold';
+          feedbackContainer.classList.remove('hidden');
+          setTimeout(hideFightModal, 1500);
+        }
+      }
+    }
+
+    function updateLivesCount() { document.getElementById('livesCount').textContent = gameState.lives; }
+
+    function hideFightModal() {
+      gameState.showingDialog = false;
+      document.getElementById('fightModal').classList.add('hidden'); document.getElementById('fightModal').classList.remove('flex');
+      checkTalkButton(); checkFightButton();
+    }
+
+    function showVictoryModal() {
+      const dragonsRemaining = 4 - gameState.defeatedDragons;
+      document.getElementById('victoryModal').classList.remove('hidden'); document.getElementById('victoryModal').classList.add('flex');
+    }
+
+    function defeatDragon() {
+      if (gameState.currentDragon) {
+        gameState.dragons = gameState.dragons.filter(d => d !== gameState.currentDragon);
+        gameState.defeatedDragons++;
+        gameState.currentDragon = null;
+        updateDragonCount();
+        renderGrid();
+        hideFightModal();
+        setTimeout(showVictoryModal, 300);
+      }
+    }
+
+    function updateDragonCount() { document.getElementById('dragonCount').textContent = 4 - gameState.defeatedDragons; }
+
+    function showWinModal() {
+      createVictoryEffect();
+      document.getElementById('winModal').classList.remove('hidden'); document.getElementById('winModal').classList.add('flex');
+    }
+
+    function hideWinModal() {
+      document.getElementById('winModal').classList.add('hidden'); document.getElementById('winModal').classList.remove('flex');
+    }
+    
+    function showGameOverModal() {
+      document.getElementById('gameOverModal').classList.remove('hidden'); document.getElementById('gameOverModal').classList.add('flex');
+    }
+
+    function hideGameOverModal() {
+      document.getElementById('gameOverModal').classList.add('hidden'); document.getElementById('gameOverModal').classList.remove('flex');
+    }
+
+    function hideVictoryModal() {
+       document.getElementById('victoryModal').classList.add('hidden'); document.getElementById('victoryModal').classList.remove('flex');
+       checkTalkButton(); checkFightButton();
+    }
+
+    function createVictoryEffect() {
+      const flash = document.createElement('div'); flash.className = 'screen-flash';
+      document.body.appendChild(flash); setTimeout(() => flash.remove(), 500);
+      
+      const app = document.getElementById('app'); app.classList.add('shake-screen');
+      setTimeout(() => app.classList.remove('shake-screen'), 400);
+      
+      const container = document.getElementById('confettiContainer');
+      const particles = ['💥', '⚡', '✨', '🔥', '💫'];
+      for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+          const particle = document.createElement('div');
+          particle.className = 'victory-particle';
+          particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+          const angle = (Math.PI * 2 * i) / 30;
+          const distance = 150 + Math.random() * 200;
+          const tx = Math.cos(angle) * distance;
+          const ty = Math.sin(angle) * distance;
+          particle.style.left = '50%'; particle.style.top = '50%';
+          particle.style.setProperty('--tx', `${tx}px`); particle.style.setProperty('--ty', `${ty}px`);
+          particle.style.animation = `explosionParticle ${0.8 + Math.random() * 0.4}s ease-out forwards`;
+          container.appendChild(particle);
+          setTimeout(() => particle.remove(), 1200);
+        }, i * 20);
+      }
+    }
+
+    // --- EVENT LISTENERS ---
+    document.getElementById('upBtn').addEventListener('click', () => moveRobot(0, -1));
+    document.getElementById('downBtn').addEventListener('click', () => moveRobot(0, 1));
+    document.getElementById('leftBtn').addEventListener('click', () => moveRobot(-1, 0));
+    document.getElementById('rightBtn').addEventListener('click', () => moveRobot(1, 0));
+    document.getElementById('resetBtn').addEventListener('click', () => { hideWinModal(); hideGameOverModal(); initGame(); });
+    document.getElementById('playAgainBtn').addEventListener('click', () => { hideWinModal(); initGame(); });
+    document.getElementById('retryBtn').addEventListener('click', () => { hideGameOverModal(); initGame(); });
+    document.getElementById('talkBtn').addEventListener('click', showDialog);
+    document.getElementById('closeDialogBtn').addEventListener('click', hideDialog);
+    document.getElementById('fightBtn').addEventListener('click', showFightModal);
+    document.getElementById('cancelFightBtn').addEventListener('click', hideFightModal);
+    document.getElementById('closeVictoryBtn').addEventListener('click', hideVictoryModal);
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('winModal').classList.contains('hidden') && document.getElementById('fightModal').classList.contains('hidden')) {
+        switch(e.key) {
+          case 'ArrowUp': e.preventDefault(); moveRobot(0, -1); break;
+          case 'ArrowDown': e.preventDefault(); moveRobot(0, 1); break;
+          case 'ArrowLeft': e.preventDefault(); moveRobot(-1, 0); break;
+          case 'ArrowRight': e.preventDefault(); moveRobot(1, 0); break;
+        }
+      }
+    });
+
+    initGame();
+  </script>
+ </body>
+</html>
+
