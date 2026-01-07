@@ -16,8 +16,8 @@
       box-sizing: border-box; 
       font-family: 'Poppins', sans-serif; 
       overflow: hidden; /* Mencegah scroll halaman */
-      touch-action: none; /* Mencegah pull-to-refresh atau zoom browser */
-      user-select: none; /* Mencegah seleksi teks saat tap cepat */
+      touch-action: none; /* Mencegah pull-to-refresh */
+      user-select: none;
       -webkit-user-select: none;
     }
     
@@ -37,25 +37,22 @@
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 2px 0px rgba(180, 83, 9, 1));
       -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.3);
-      font-size: 1.8rem; /* Ukuran font mobile friendly */
+      font-size: 1.8rem;
     }
 
-    /* --- GRID SYSTEM (Responsive Square) --- */
+    /* --- GRID SYSTEM --- */
     .map-frame {
       background-color: #5d4037; border: 4px solid #3e2723; border-radius: 12px; padding: 4px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      width: 95vw; /* Lebar hampir penuh layar HP */
-      max-width: 400px; /* Batas maksimal untuk Tablet/PC */
-      aspect-ratio: 1 / 1; /* Pastikan selalu kotak */
+      width: 95vw;
+      max-width: 400px;
+      aspect-ratio: 1 / 1;
       margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
     
     #gameGrid {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       grid-template-rows: repeat(6, 1fr);
@@ -68,21 +65,27 @@
     .grass-light { background-color: #86efac; }
     .grass-dark { background-color: #4ade80; }
     .cell-wall { background-color: #3f6212 !important; border-bottom: 3px solid #14532d; }
-    .cell-boss { background-color: rgba(147, 51, 234, 0.4) !important; border: 2px solid #9333ea; animation: bossPulse 2s infinite; }
+    
+    /* Boss: Purple Glow */
+    .cell-boss { 
+        background-color: rgba(147, 51, 234, 0.4) !important; 
+        border: 2px solid #9333ea; 
+        animation: bossPulse 2s infinite; 
+    }
     .cell-danger { background-color: rgba(239, 68, 68, 0.3) !important; border: 1px solid #ef4444; }
     .cell-safe { background-color: rgba(251, 191, 36, 0.3) !important; border: 1px dashed #fbbf24; }
+    .cell-learn { background-color: rgba(59, 130, 246, 0.3) !important; border: 1px solid #3b82f6; }
     
     @keyframes bossPulse { 0%, 100% { border-color: #9333ea; } 50% { border-color: #ffffff; } }
 
-    /* Character Sizes (Responsive via Clamp/Calc) */
+    /* Character Sizes */
     .char-icon {
-      font-size: clamp(1.2rem, 8vw, 2.5rem); /* Skala font dinamis */
+      font-size: clamp(1.2rem, 8vw, 2.5rem);
       filter: drop-shadow(0 2px 1px rgba(0,0,0,0.3));
       z-index: 10;
     }
     
-    .robot { animation: robotBounce 0.5s ease; }
-    @keyframes robotBounce { 50% { transform: scale(1.2) translateY(-20%); } }
+    .robot { transition: transform 0.1s; }
 
     /* --- CONTROLS (D-PAD) --- */
     .d-pad-container {
@@ -95,41 +98,24 @@
     }
     
     .control-btn {
-      width: 55px; height: 55px; /* Tombol besar untuk jempol */
+      width: 55px; height: 55px;
       border-radius: 12px;
-      font-size: 1.5rem;
-      font-weight: bold;
+      font-size: 1.5rem; font-weight: bold;
       background: #fbbf24; color: #451a03;
       box-shadow: 0 4px 0 #b45309;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.1s;
     }
     .control-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #b45309; }
 
-    /* --- MODALS (Mobile Optimized) --- */
+    /* --- MODALS --- */
     .win-modal {
       width: 90%; max-width: 380px;
-      max-height: 85vh;
-      overflow-y: auto; /* Scroll jika konten panjang */
+      max-height: 85vh; overflow-y: auto;
       animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    /* --- UI ELEMENTS --- */
-    .music-btn {
-      position: absolute; top: 10px; right: 10px; z-index: 50;
-      background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.3);
-      padding: 6px 12px; rounded-full; font-size: 0.75rem;
-    }
-    
-    .scroll-indicator {
-      font-size: 1.5rem;
-      background: rgba(255,255,255,0.1);
-      padding: 4px 8px;
-      border-radius: 8px;
-    }
-
-    /* Screen Shake */
+    /* Screen Shake Animation Only (No Sound) */
     .shake-screen { animation: screenShake 0.4s ease; }
     @keyframes screenShake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-5px, 5px); } 75% { transform: translate(5px, -5px); } }
   </style>
@@ -139,11 +125,6 @@
  <body class="h-full">
   <div id="app" class="w-full h-full flex flex-col items-center">
    
-   <audio id="bgm" loop>
-      <source src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_349d473484.mp3?filename=arcade-game-music-loop-113587.mp3" type="audio/mpeg">
-   </audio>
-   <button id="musicToggle" class="music-btn">🎵 OFF</button>
-
    <div class="text-center pt-4 pb-2 px-3 w-full relative z-10 flex flex-col items-center shrink-0">
     <h1 class="epic-title mb-1 leading-none">Desa Mahulu</h1>
     
@@ -156,7 +137,7 @@
                 <span>❤️</span> <span id="livesCount" class="text-green-400 text-sm">2</span>
             </div>
         </div>
-        <div id="scrollIndicator" class="scroll-indicator grayscale opacity-30 transition-all">📜</div>
+        <div id="studyIndicator" class="grayscale opacity-30 transition-all text-xl" title="Sudah Belajar">📖</div>
     </div>
     
     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Swipe atau Tekan Tombol</p>
@@ -190,15 +171,38 @@
        </button>
    </div>
 
+   <div id="learningModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/80">
+       <div class="win-modal bg-slate-900 border-4 border-blue-500 rounded-2xl p-6 text-center">
+           <div class="text-6xl mb-2">📖</div>
+           <h2 class="text-xl font-black text-blue-400 mb-2">TEMPAT BELAJAR</h2>
+           
+           <div class="bg-slate-800 p-3 rounded-lg text-left text-sm text-white mb-4 border border-slate-700">
+               <p class="mb-2 font-bold text-yellow-400">Rumus Translasi (Pergeseran)</p>
+               <p class="mb-2">Jika titik <span class="text-blue-300">A(x, y)</span> digeser sejauh <span class="text-green-300">T(a, b)</span>:</p>
+               <ul class="list-disc pl-5 mb-2 space-y-1">
+                   <li>Koordinat x ditambah a</li>
+                   <li>Koordinat y ditambah b</li>
+               </ul>
+               <div class="bg-black/30 p-2 rounded text-center font-mono text-yellow-200 border border-yellow-600/30">
+                   A'(x + a, y + b)
+               </div>
+               <p class="mt-2 text-xs text-slate-400 italic text-center">Hafalkan ini untuk mengalahkan Naga!</p>
+           </div>
+           
+           <button id="closeLearningBtn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow">Saya Mengerti!</button>
+       </div>
+   </div>
+
    <div id="fightModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/80 backdrop-blur-sm">
     <div class="win-modal bg-slate-900 border-4 border-slate-500 rounded-2xl p-4 text-center relative" id="fightModalFrame">
      
      <div id="bossHeader" class="hidden flex-col items-center mb-2">
-         <div class="text-4xl mb-1">👿</div>
-         <h2 class="text-xl font-black text-purple-400 uppercase">BOSS BATTLE</h2>
+         <div class="text-5xl mb-1">🐲</div>
+         <h2 class="text-xl font-black text-purple-400 uppercase">BOSS NAGA</h2>
          <div class="w-full bg-slate-700 rounded-full h-3 mt-1 relative overflow-hidden">
              <div id="bossHpBar" class="bg-gradient-to-r from-purple-600 to-fuchsia-500 h-full transition-all" style="width: 100%"></div>
          </div>
+         <p class="text-xs text-slate-400 mt-1">Jawab 3 soal benar berturut-turut!</p>
      </div>
 
      <div id="normalHeader" class="flex flex-col items-center mb-2">
@@ -207,12 +211,6 @@
      </div>
      
      <div class="bg-slate-800 p-3 rounded-xl mb-3 text-left border border-slate-700 relative">
-      <button id="formulaBtn" class="hidden absolute top-2 right-2 bg-amber-500 text-amber-900 text-[10px] font-bold px-2 py-1 rounded shadow">📜 Rumus</button>
-      
-      <div id="formulaArea" class="hidden bg-amber-100 p-2 rounded mb-2 text-amber-900 text-xs border border-amber-500">
-          <strong>Rumus Translasi:</strong><br>A(x, y) + T(a, b) = A'(x+a, y+b)
-      </div>
-
       <p id="questionText" class="text-sm font-bold text-white mb-3 leading-snug"></p>
       <div id="optionsContainer" class="flex flex-col gap-2"></div>
      </div>
@@ -234,20 +232,11 @@
     </div>
    </div>
 
-   <div id="itemModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/80">
-       <div class="win-modal bg-slate-900 border-4 border-amber-500 rounded-2xl p-6 text-center">
-           <div class="text-6xl mb-2 animate-bounce">📜</div>
-           <h2 class="text-xl font-black text-amber-400 mb-2">GULUNGAN RUMUS!</h2>
-           <p class="text-white text-sm mb-4">Catatan kuno ditemukan! Gunakan saat bertarung.</p>
-           <button id="closeItemBtn" class="w-full py-3 bg-amber-600 text-white rounded-xl font-bold shadow">Ambil!</button>
-       </div>
-   </div>
-
    <div id="winModal" class="fixed inset-0 items-center justify-center hidden px-4 z-50 bg-black/90">
     <div class="win-modal bg-slate-900 border-4 border-purple-500 rounded-2xl p-6 text-center">
      <div class="text-6xl mb-4 animate-bounce">🏆</div>
      <h2 class="text-2xl font-black text-purple-400 mb-2">MENANG!</h2>
-     <p class="text-slate-300 text-sm mb-6">Desa Mahulu aman. Kamu Ninja Sejati!</p>
+     <p class="text-slate-300 text-sm mb-6">Desa Mahulu aman. Kamu Ninja Matematika Sejati!</p>
      <button id="playAgainBtn" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold w-full shadow-lg">Main Lagi</button>
     </div>
    </div>
@@ -264,41 +253,6 @@
   </div>
 
   <script>
-    // --- AUDIO SYSTEM ---
-    const AudioController = {
-      ctx: null, bgmPlaying: false,
-      init: function() {
-        if (!this.ctx) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          this.ctx = new AudioContext();
-        }
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-      },
-      playBGM: function() {
-        const bgm = document.getElementById('bgm'); bgm.volume = 0.3;
-        bgm.play().then(() => { this.bgmPlaying = true; document.getElementById('musicToggle').textContent = "🎵 ON"; }).catch(e=>{});
-      },
-      toggleBGM: function() {
-        this.init(); const bgm = document.getElementById('bgm');
-        if (this.bgmPlaying) { bgm.pause(); this.bgmPlaying = false; document.getElementById('musicToggle').textContent = "🎵 OFF"; }
-        else this.playBGM();
-      },
-      playTone: function(freq, type, duration, vol=0.1) {
-        if (!this.ctx) return;
-        const o=this.ctx.createOscillator(); const g=this.ctx.createGain();
-        o.type=type; o.frequency.setValueAtTime(freq,this.ctx.currentTime);
-        g.gain.setValueAtTime(vol,this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+duration);
-        o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+duration);
-      },
-      sfxStep: function(){ if(!this.ctx)return; const b=this.ctx.createBuffer(1,this.ctx.sampleRate*0.05,this.ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1; const s=this.ctx.createBufferSource(); s.buffer=b; const g=this.ctx.createGain(); g.gain.value=0.1; s.connect(g); g.connect(this.ctx.destination); s.start(); },
-      sfxCorrect: function(){ this.playTone(600,'sine',0.1); setTimeout(()=>this.playTone(900,'sine',0.3),100); },
-      sfxWrong: function(){ this.playTone(150,'sawtooth',0.2); setTimeout(()=>this.playTone(100,'sawtooth',0.3),150); },
-      sfxWin: function(){ this.playTone(400,'square',0.1); setTimeout(()=>this.playTone(600,'square',0.1),200); setTimeout(()=>this.playTone(800,'square',0.5),300); },
-      sfxAlert: function(){ this.playTone(400,'triangle',0.1); setTimeout(()=>this.playTone(400,'triangle',0.1),100); },
-      sfxItem: function(){ this.playTone(800,'sine',0.1, 0.2); setTimeout(()=>this.playTone(1200,'sine',0.3, 0.2),100); }
-    };
-
     // --- GAME DATA ---
     const translationQuestions = [
       { question: "A(3, 2) ditranslasi T(4, 1). A' = ...", options: ["(7, 3)", "(1, 1)", "(12, 2)", "(7, 2)"], correct: 0 },
@@ -316,12 +270,13 @@
     let gameState = {
       robotPos: { x: 0, y: 0 }, starPos: { x: 1, y: 1 }, gridSize: 6,
       walls: [], dragons: [], bossDragon: { x: 5, y: 5, hp: 3, maxHp: 3, alive: true },
-      scroll: { x: 2, y: 0, collected: false },
+      learnSpot: { x: 2, y: 0, visited: false },
       defeatedDragons: 0, showingDialog: false, currentEnemy: null, currentDragonObj: null,
       lives: 2, currentQuestion: null, usedQuestions: []
     };
 
     function generateLevel() {
+      // Peta sederhana
       gameState.walls = [{x:3,y:2,e:'🌳'},{x:2,y:3,e:'🪨'},{x:3,y:3,e:'🏠'},{x:0,y:3,e:'🏔️'},{x:5,y:2,e:'⛰️'},{x:2,y:5,e:'🌳'},{x:4,y:0,e:'🪨'}];
       gameState.dragons = [{x:3,y:0},{x:5,y:1},{x:0,y:4}];
     }
@@ -329,7 +284,8 @@
     // --- CORE FUNCTIONS ---
     function initGame() {
       gameState.robotPos = {x:0,y:0}; gameState.starPos = {x:1,y:1}; gameState.lives = 2;
-      gameState.scroll = {x:2,y:0,collected:false}; gameState.bossDragon = {x:5,y:5,hp:3,maxHp:3,alive:true};
+      gameState.learnSpot = {x:2,y:0,visited:false}; 
+      gameState.bossDragon = {x:5,y:5,hp:3,maxHp:3,alive:true};
       gameState.defeatedDragons = 0; gameState.showingDialog = false; gameState.usedQuestions = [];
       generateLevel();
       updateUI(); renderGrid(); checkInteractions();
@@ -346,12 +302,12 @@
           const wall = gameState.walls.find(w=>w.x===x&&w.y===y);
           const drag = gameState.dragons.find(d=>d.x===x&&d.y===y);
           const boss = (gameState.bossDragon.alive && gameState.bossDragon.x===x && gameState.bossDragon.y===y);
-          const scr = (!gameState.scroll.collected && gameState.scroll.x===x && gameState.scroll.y===y);
+          const learn = (!gameState.learnSpot.visited && gameState.learnSpot.x===x && gameState.learnSpot.y===y);
 
           if(wall) { cls='cell-wall'; content=`<span class="char-icon">${wall.e}</span>`; }
-          else if(boss) { cls='cell-boss'; content='<span class="char-icon">👿</span>'; }
+          else if(boss) { cls='cell-boss'; content='<span class="char-icon">🐲</span>'; } /* BOSS EMOJI */
           else if(drag) { cls='cell-danger'; content='<span class="char-icon">🐉</span>'; }
-          else if(scr) { content='<span class="char-icon animate-bounce">📜</span>'; }
+          else if(learn) { cls='cell-learn'; content='<span class="char-icon animate-bounce">📜</span>'; }
           else if(x===gameState.starPos.x && y===gameState.starPos.y) { cls='cell-safe'; content='<span class="char-icon">👴</span>'; }
           
           if(x===gameState.robotPos.x && y===gameState.robotPos.y) content='<span class="char-icon robot">🥷</span>';
@@ -365,21 +321,22 @@
 
     function move(dx, dy) {
       if(gameState.showingDialog) return;
-      AudioController.init();
       const nx = gameState.robotPos.x + dx; const ny = gameState.robotPos.y + dy;
       if (nx>=0 && nx<gameState.gridSize && ny>=0 && ny<gameState.gridSize) {
         if (!gameState.walls.some(w=>w.x===nx&&w.y===ny) && 
             !gameState.dragons.some(d=>d.x===nx&&d.y===ny) && 
             !(gameState.bossDragon.alive && gameState.bossDragon.x===nx && gameState.bossDragon.y===ny) &&
             !(gameState.starPos.x===nx && gameState.starPos.y===ny)) {
-          gameState.robotPos = {x:nx, y:ny};
-          AudioController.sfxStep();
           
-          if(!gameState.scroll.collected && nx===gameState.scroll.x && ny===gameState.scroll.y) {
-             gameState.scroll.collected = true; AudioController.sfxItem();
-             document.getElementById('itemModal').classList.remove('hidden'); gameState.showingDialog = true;
+          gameState.robotPos = {x:nx, y:ny};
+          
+          // Cek Tempat Belajar
+          if(!gameState.learnSpot.visited && nx===gameState.learnSpot.x && ny===gameState.learnSpot.y) {
+             gameState.learnSpot.visited = true;
+             document.getElementById('learningModal').classList.remove('hidden'); gameState.showingDialog = true;
              updateUI();
           }
+
           renderGrid(); checkInteractions();
         }
       }
@@ -393,20 +350,21 @@
       const fightBtn = document.getElementById('fightBtn');
       const bossBtn = document.getElementById('bossBtn');
       
+      // Reset Visibility (Tanpa Suara)
       talkBtn.classList.add('hidden'); fightBtn.classList.add('hidden'); bossBtn.classList.add('hidden');
 
       if(isNear(gameState.starPos.x, gameState.starPos.y)) {
-         talkBtn.classList.remove('hidden'); AudioController.sfxAlert();
+         talkBtn.classList.remove('hidden');
       }
       
       let enemyFound = false;
       for(let d of gameState.dragons) {
         if(isNear(d.x, d.y)) {
-           fightBtn.classList.remove('hidden'); gameState.currentEnemy='minion'; gameState.currentDragonObj=d; enemyFound=true; AudioController.sfxAlert(); break; 
+           fightBtn.classList.remove('hidden'); gameState.currentEnemy='minion'; gameState.currentDragonObj=d; enemyFound=true; break; 
         }
       }
       if(!enemyFound && gameState.bossDragon.alive && isNear(gameState.bossDragon.x, gameState.bossDragon.y)) {
-          bossBtn.classList.remove('hidden'); gameState.currentEnemy='boss'; AudioController.sfxAlert();
+          bossBtn.classList.remove('hidden'); gameState.currentEnemy='boss';
       }
     }
 
@@ -415,17 +373,15 @@
       document.getElementById('dragonCount').textContent = dCount;
       document.getElementById('livesCount').textContent = gameState.lives;
       
-      const scr = document.getElementById('scrollIndicator');
-      const formBtn = document.getElementById('formulaBtn');
-      if(gameState.scroll.collected) { scr.classList.remove('grayscale','opacity-30'); formBtn.classList.remove('hidden'); }
-      else { scr.classList.add('grayscale','opacity-30'); formBtn.classList.add('hidden'); }
+      const studyInd = document.getElementById('studyIndicator');
+      if(gameState.learnSpot.visited) { studyInd.classList.remove('grayscale','opacity-30'); }
+      else { studyInd.classList.add('grayscale','opacity-30'); }
     }
 
     // --- FIGHT LOGIC ---
     function startFight() {
       gameState.showingDialog = true;
       document.getElementById('fightModal').classList.remove('hidden');
-      document.getElementById('formulaArea').classList.add('hidden');
       document.getElementById('feedbackContainer').classList.add('hidden');
       
       const isBoss = gameState.currentEnemy === 'boss';
@@ -466,16 +422,14 @@
           if(gameState.currentEnemy==='boss') {
               gameState.bossDragon.hp--; updateBossHP();
               if(gameState.bossDragon.hp<=0) {
-                 AudioController.sfxWin(); gameState.bossDragon.alive=false;
-                 ft.textContent="BOSS KALAH!"; ft.className="text-purple-400 font-bold text-sm";
+                 gameState.bossDragon.alive=false;
+                 ft.textContent="BOSS NAGA KALAH!"; ft.className="text-purple-400 font-bold text-sm";
                  setTimeout(endFight, 1500);
               } else {
-                 AudioController.sfxCorrect();
-                 ft.textContent=`KENA! Sisa HP: ${gameState.bossDragon.hp}`; ft.className="text-yellow-400 font-bold text-sm";
+                 ft.textContent=`SERANGAN MASUK! Sisa HP: ${gameState.bossDragon.hp}`; ft.className="text-yellow-400 font-bold text-sm";
                  setTimeout(startFight, 1000); // Next round
               }
           } else {
-              AudioController.sfxCorrect();
               gameState.dragons = gameState.dragons.filter(d=>d!==gameState.currentDragonObj);
               gameState.defeatedDragons++;
               ft.textContent="MENANG!"; ft.className="text-green-400 font-bold text-sm";
@@ -483,15 +437,14 @@
           }
        } else {
           gameState.lives--; updateUI();
-          if(gameState.currentEnemy==='boss') { gameState.bossDragon.hp=3; updateBossHP(); } // Reset boss
+          if(gameState.currentEnemy==='boss') { gameState.bossDragon.hp=3; updateBossHP(); } // Reset boss on wrong
           
           if(gameState.lives<=0) {
-              AudioController.sfxWrong();
               document.getElementById('fightModal').classList.add('hidden');
               document.getElementById('gameOverModal').classList.remove('hidden');
           } else {
-              AudioController.sfxWrong();
-              ft.textContent="SALAH! Nyawa -1"; ft.className="text-red-400 font-bold text-sm";
+              const msg = gameState.currentEnemy==='boss' ? "SALAH! Boss pulih." : "SALAH! Nyawa -1";
+              ft.textContent=msg; ft.className="text-red-400 font-bold text-sm";
               setTimeout(()=>{ document.getElementById('fightModal').classList.add('hidden'); gameState.showingDialog=false; }, 1000);
           }
        }
@@ -502,7 +455,7 @@
        gameState.showingDialog = false;
        updateUI(); renderGrid(); checkInteractions();
        if(!gameState.bossDragon.alive && gameState.dragons.length===0) {
-           document.getElementById('winModal').classList.remove('hidden'); AudioController.sfxWin();
+           document.getElementById('winModal').classList.remove('hidden');
            createConfetti();
        }
     }
@@ -523,7 +476,7 @@
        }
     }
 
-    // --- INPUT HANDLING (SWIPE & BUTTONS) ---
+    // --- INPUT HANDLING ---
     // Touch / Swipe
     let touchStartX = 0, touchStartY = 0;
     const touchArea = document.getElementById('touchArea');
@@ -538,28 +491,24 @@
        }
     }, {passive:false});
 
-    // Button Listeners
+    // Buttons
     document.getElementById('upBtn').onclick = ()=>move(0,-1);
     document.getElementById('downBtn').onclick = ()=>move(0,1);
     document.getElementById('leftBtn').onclick = ()=>move(-1,0);
     document.getElementById('rightBtn').onclick = ()=>move(1,0);
     
-    // Action Listeners
+    // Actions
     document.getElementById('talkBtn').onclick = () => {
-        document.getElementById('grandpaMessage').textContent = (!gameState.bossDragon.alive) ? "Kamu hebat! Desa ini aman sekarang." : "Hati-hati, Raja Naga di pojok sangat kuat! Cari gulungan dulu.";
+        document.getElementById('grandpaMessage').textContent = (!gameState.bossDragon.alive) ? "Luar biasa! Desa aman." : "Cari buku di utara untuk belajar rumus Translasi!";
         document.getElementById('dialogModal').classList.remove('hidden'); gameState.showingDialog = true;
     };
     document.getElementById('fightBtn').onclick = startFight;
     document.getElementById('bossBtn').onclick = startFight;
-    document.getElementById('formulaBtn').onclick = () => document.getElementById('formulaArea').classList.toggle('hidden');
-
+    
     // Close Modals
     document.getElementById('closeDialogBtn').onclick = ()=>{ document.getElementById('dialogModal').classList.add('hidden'); gameState.showingDialog=false; };
-    document.getElementById('closeItemBtn').onclick = ()=>{ document.getElementById('itemModal').classList.add('hidden'); gameState.showingDialog=false; };
+    document.getElementById('closeLearningBtn').onclick = ()=>{ document.getElementById('learningModal').classList.add('hidden'); gameState.showingDialog=false; };
     document.getElementById('cancelFightBtn').onclick = ()=>{ document.getElementById('fightModal').classList.add('hidden'); gameState.showingDialog=false; };
-    
-    // System
-    document.getElementById('musicToggle').onclick = ()=>AudioController.toggleBGM();
     document.getElementById('resetBtn').onclick = ()=>initGame();
     document.getElementById('retryBtn').onclick = ()=>{ document.getElementById('gameOverModal').classList.add('hidden'); initGame(); };
     document.getElementById('playAgainBtn').onclick = ()=>{ document.getElementById('winModal').classList.add('hidden'); initGame(); };
